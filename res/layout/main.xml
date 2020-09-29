@@ -17,8 +17,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_marginEnd="200px"
-        android:layout_centerVertical="true"
+        android:layout_marginEnd="150dp"
+        android:layout_marginTop="100dp"
         android:onClick="onClick" />
+
+    <TextView
+        android:id="@+id/recogText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="650dp"
+        android:layout_below="@+id/captureButton"
+        android:layout_marginTop="50dp"
+        android:text="Recognition: None"
+        android:textSize="16dp"/>
 
 </RelativeLayout>
