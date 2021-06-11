@@ -23,15 +23,15 @@ class ImageAnalyzer(context: Context, private val listener: RecogListener) :
         ImageAnalysis.Analyzer {
     private var tfliteModel : MappedByteBuffer
     private var labelList = ArrayList<String>()
-    private var outputs: Array<FloatArray>
+    private var outputs: Array<ByteArray>
 
     private lateinit var tflite: Interpreter
     private var initialized = false
 
     init {
-        tfliteModel = FileUtil.loadMappedFile(context, "mobilenet_v1_1_0_224_float.tflite")
+        tfliteModel = FileUtil.loadMappedFile(context, "mobilenet_v1_1_0_224_quantized.tflite")
         loadLabels(context.assets.open("labels.txt"))
-        outputs = Array(1) { FloatArray(labelList.size) }
+        outputs = Array(1) { ByteArray(labelList.size) }
     }
 
     private fun loadLabels(stream: InputStream) {
@@ -82,7 +82,7 @@ class ImageAnalyzer(context: Context, private val listener: RecogListener) :
     }
 
     private val RESULTS_TO_SHOW = 3
-    private val sortedLabels = PriorityQueue<Map.Entry<String, Float>>(RESULTS_TO_SHOW)
+    private val sortedLabels = PriorityQueue<Map.Entry<String, Byte>>(RESULTS_TO_SHOW)
     { o1, o2 -> o1.value.compareTo(o2.value) }
 
     private fun getResult(): String {
@@ -96,7 +96,7 @@ class ImageAnalyzer(context: Context, private val listener: RecogListener) :
         var text = ""
         for (i in 0 until sortedLabels.size) {
             val label = sortedLabels.poll()
-            text = String.format("\n   %s: %f", label.key, label.value) + text
+            text = String.format("\n   %s: %d", label.key, label.value) + text
         }
         text = "Recognition: " + (endTime - startTime) + " msec" + text
         return text
@@ -111,7 +111,7 @@ class ImageAnalyzer(context: Context, private val listener: RecogListener) :
     private fun convertBitmapToByteBuffer(bitmap: Bitmap) {
         if (imgData == null) {
             imgData = ByteBuffer.allocateDirect(
-                    1 * 224 * 224 * 3 * 4)
+                    1 * 224 * 224 * 3)
             imgData!!.order(ByteOrder.nativeOrder())
         }
         imgData!!.rewind()
@@ -121,9 +121,9 @@ class ImageAnalyzer(context: Context, private val listener: RecogListener) :
         for (i in 0 until 224) {
             for (j in 0 until 224) {
                 val v: Int = intValues.get(pixel++)
-                imgData!!.putFloat(((v shr 16 and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
-                imgData!!.putFloat(((v shr 8 and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
-                imgData!!.putFloat(((v and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
+                imgData!!.put((v shr 16 and 0xFF).toByte())
+                imgData!!.put((v shr 8 and 0xFF).toByte())
+                imgData!!.put((v and 0xFF).toByte())
             }
         }
     }
